@@ -6,6 +6,7 @@ import base64
 import shutil
 from datetime import datetime
 from pathlib import Path
+import bcrypt
 from bottle import route, run, template, post, request, static_file
 
 
@@ -73,7 +74,8 @@ def Registro():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			cursor.execute('INSERT INTO Usuario VALUES(null, %s, %s, md5(%s))', (request.json['uname'], request.json['email'], request.json['password'])
+			hashed = bcrypt.hashpw(request.json['password'].encode(), bcrypt.gensalt())
+            cursor.execute('INSERT INTO Usuario VALUES(null, %s, %s, %s)',(request.json['uname'], request.json['email'], hashed.decode()))
 )
 			R = cursor.lastrowid
 			db.commit()
@@ -123,8 +125,14 @@ def Login():
 	try:
 		with db.cursor() as cursor:
 			print(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")')
-			cursor.execute('SELECT id FROM Usuario WHERE uname = %s AND password = md5(%s)',(request.json['uname'], request.json['password']))
-			R = cursor.fetchall()
+			cursor.execute('SELECT id, password FROM Usuario WHERE uname = %s',(request.json['uname'],))
+            R = cursor.fetchall()
+            if not R:
+                db.close()
+                return {"R": -3}
+            if not bcrypt.checkpw(request.json['password'].encode(), R[0][1].encode()):
+                db.close()
+                return {"R": -3}
 	except Exception as e: 
 		print(e)
 		db.close()
