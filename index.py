@@ -233,7 +233,15 @@ def Imagen():
 			cursor.execute('UPDATE Imagen SET ruta = %s WHERE id = %s', (f'img/{idImagen}.{request.json["ext"]}', idImagen))
 			db.commit()
 			# Mover archivo a su nueva locacion
-			shutil.move('tmp/'+str(id_Usuario),'img/'+str(idImagen)+'.'+str(request.json['ext']))
+			EXTENSIONES_PERMITIDAS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+            ext = str(request.json['ext']).lower().strip()
+
+            if ext not in EXTENSIONES_PERMITIDAS:
+                db.close()
+                return {"R": -4, "msg": "Extension no permitida"}
+
+            nombre_seguro = f'img/{idImagen}.{ext}'
+            shutil.move(f'tmp/{id_Usuario}', nombre_seguro)
 			return {"R":0,"D":idImagen}
 	except Exception as e: 
 		print(e)
