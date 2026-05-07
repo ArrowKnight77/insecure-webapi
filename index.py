@@ -8,6 +8,13 @@ from datetime import datetime
 from pathlib import Path
 import bcrypt
 from bottle import route, run, template, post, request, static_file
+import logging
+
+logging.basicConfig(
+    filename='/var/log/webapi.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
 
 
 
@@ -124,7 +131,6 @@ def Login():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			print(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")')
 			cursor.execute('SELECT id, password FROM Usuario WHERE uname = %s',(request.json['uname'],))
             R = cursor.fetchall()
             if not R:
@@ -145,9 +151,8 @@ def Login():
 	
 	T = getToken();
 	#file_put_contents('/tmp/log','insert into AccesoToken values('.R[0].',"'.T.'",now())');
-	with open("/tmp/log","a") as log:
-		log.write(f'Delete from AccesoToken where id_Usuario = "{R[0][0]}"\n')
-		log.write(f'insert into AccesoToken values({R[0][0]},"{T}",now())\n')
+	logging.info(f'Login exitoso para usuario: {request.json["uname"]}')
+
 	
 	
 	try:
