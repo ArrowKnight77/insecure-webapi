@@ -1,2 +1,4 @@
 db.json
 *.log
+tmp/
+img/
